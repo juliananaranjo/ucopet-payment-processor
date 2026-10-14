@@ -1,0 +1,6 @@
+plugins {
+    // Igual que en la API: descarga el JDK 25 si quien compila no lo tiene instalado.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'ucopet-payment-processor'
