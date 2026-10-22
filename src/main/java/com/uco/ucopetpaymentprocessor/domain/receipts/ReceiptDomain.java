@@ -1,7 +1,7 @@
-package com.uco.ucopetpaymentprocessor.domain.receipt;
+package com.uco.ucopetpaymentprocessor.domain.receipts;
 
-import com.uco.ucopetpaymentprocessor.domain.paymethod.PayMethodDomain;
-import com.uco.ucopetpaymentprocessor.domain.receipt.receiptStatus.ReceiptStatus;
+import com.uco.ucopetpaymentprocessor.domain.payMethods.PayMethodDomain;
+import com.uco.ucopetpaymentprocessor.dto.receipt.ReceiptStatus;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -13,7 +13,6 @@ import java.util.UUID;
 public class ReceiptDomain {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "receipt_number", nullable = false, unique = true)
