@@ -1,4 +1,4 @@
-package com.uco.ucopetpaymentprocessor.domain.paymethod;
+package com.uco.ucopetpaymentprocessor.domain.payMethods;
 
 
 import jakarta.persistence.*;

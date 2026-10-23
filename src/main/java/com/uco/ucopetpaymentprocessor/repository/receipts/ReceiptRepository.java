@@ -1,7 +1,7 @@
-package com.uco.ucopetpaymentprocessor.repository.receipt;
+package com.uco.ucopetpaymentprocessor.repository.receipts;
 
-import com.uco.ucopetpaymentprocessor.domain.receipt.ReceiptDomain;
-import com.uco.ucopetpaymentprocessor.domain.receipt.receiptStatus.ReceiptStatus;
+import com.uco.ucopetpaymentprocessor.domain.receipts.ReceiptDomain;
+import com.uco.ucopetpaymentprocessor.dto.receipt.ReceiptStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
