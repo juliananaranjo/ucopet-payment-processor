@@ -1,7 +1,7 @@
 package com.uco.ucopetpaymentprocessor.domain.receipts;
 
 import com.uco.ucopetpaymentprocessor.domain.payMethods.PayMethodDomain;
-import com.uco.ucopetpaymentprocessor.dto.receipt.ReceiptStatus;
+import com.uco.ucopetpaymentprocessor.domain.receipts.receiptStatus.ReceiptStatus;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -63,6 +63,7 @@ public class ReceiptDomain {
     public UUID getId() {
         return id;
     }
+    public void setId(final UUID id) {this.id = id;}
 
     public String getReceiptNumber() {
         return receiptNumber;
