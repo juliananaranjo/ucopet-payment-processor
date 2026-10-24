@@ -2,10 +2,8 @@ package com.uco.ucopetpaymentprocessor.service.receipts;
 
 import com.uco.ucopetpaymentprocessor.domain.payMethods.PayMethodDomain;
 import com.uco.ucopetpaymentprocessor.domain.receipts.ReceiptDomain;
-import com.uco.ucopetpaymentprocessor.dto.receipt.ReceiptStatus;
-import com.uco.ucopetpaymentprocessor.dto.receipt.ReceiptCancelMessageDTO;
-import com.uco.ucopetpaymentprocessor.dto.receipt.ReceiptMessageDTO;
-import com.uco.ucopetpaymentprocessor.repository.payMethods.PayMethodRepository;
+import com.uco.ucopetpaymentprocessor.domain.receipts.receiptStatus.ReceiptStatus;
+import com.uco.ucopetpaymentprocessor.repository.paymethod.PayMethodRepository;
 import com.uco.ucopetpaymentprocessor.repository.receipts.ReceiptRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,23 +27,25 @@ public class ReceiptService {
     }
 
     @Transactional
-    public void create(final ReceiptMessageDTO message) {
-        validate(message);
-        if (receiptRepository.existsById(message.receiptId())) {
-            log.warn("Recibo {} ya existe, se ignora el mensaje duplicado", message.receiptId());
+    public void create(final ReceiptDomain incoming) {
+        validate(incoming);
+
+        // Idempotencia: si el mensaje se reentrega, no se duplica el recibo.
+        if (receiptRepository.existsById(incoming.getId())) {
+            log.warn("Recibo {} ya existe, se ignora el mensaje duplicado", incoming.getId());
             return;
         }
 
         final ReceiptDomain receipt = ReceiptDomain.builder()
-                .id(message.receiptId())
-                .receiptNumber(nextReceiptNumber())
-                .tutorId(message.tutorId())
-                .petId(message.petId())
-                .concept(message.concept())
-                .amount(message.amount())
-                .payMethod(resolvePayMethod(message))
-                .date(message.date())
-                .state(ReceiptStatus.ACTIVE)
+                .id(incoming.getId())
+                .receiptNumber(nextReceiptNumber())      // lo asigna el processor
+                .tutorId(incoming.getTutorId())
+                .petId(incoming.getPetId())
+                .concept(incoming.getConcept())
+                .amount(incoming.getAmount())
+                .payMethod(resolvePayMethod(incoming))
+                .date(incoming.getDate())
+                .state(ReceiptStatus.ACTIVE)             // lo decide el processor
                 .build();
 
         receiptRepository.save(receipt);
@@ -53,35 +53,35 @@ public class ReceiptService {
     }
 
     @Transactional
-    public void update(final ReceiptMessageDTO message) {
-        validate(message);
+    public void update(final ReceiptDomain incoming) {
+        validate(incoming);
 
-        final ReceiptDomain receipt = receiptRepository.findById(message.receiptId())
-                .orElseThrow(() -> new IllegalStateException("El recibo no existe: " + message.receiptId()));
+        final ReceiptDomain receipt = receiptRepository.findById(incoming.getId())
+                .orElseThrow(() -> new IllegalStateException("El recibo no existe: " + incoming.getId()));
 
         if (receipt.getState() == ReceiptStatus.CANCELLED) {
-            throw new IllegalStateException("No se puede modificar un recibo anulado: " + message.receiptId());
+            throw new IllegalStateException("No se puede modificar un recibo anulado: " + incoming.getId());
         }
 
-        receipt.setTutorId(message.tutorId());
-        receipt.setPetId(message.petId());
-        receipt.setConcept(message.concept());
-        receipt.setAmount(message.amount());
-        receipt.setPayMethod(resolvePayMethod(message));
-        receipt.setDate(message.date());
+        receipt.setTutorId(incoming.getTutorId());
+        receipt.setPetId(incoming.getPetId());
+        receipt.setConcept(incoming.getConcept());
+        receipt.setAmount(incoming.getAmount());
+        receipt.setPayMethod(resolvePayMethod(incoming));
+        receipt.setDate(incoming.getDate());
 
         receiptRepository.save(receipt);
         log.info("Recibo {} actualizado", receipt.getId());
     }
 
     @Transactional
-    public void cancel(final ReceiptCancelMessageDTO message) {
-        if (message == null || message.receiptId() == null) {
-            throw new IllegalArgumentException("El mensaje de anulación no trae receiptId");
+    public void cancel(final ReceiptDomain incoming) {
+        if (incoming == null || incoming.getId() == null) {
+            throw new IllegalArgumentException("El mensaje de anulación no trae id");
         }
 
-        final ReceiptDomain receipt = receiptRepository.findById(message.receiptId())
-                .orElseThrow(() -> new IllegalStateException("El recibo no existe: " + message.receiptId()));
+        final ReceiptDomain receipt = receiptRepository.findById(incoming.getId())
+                .orElseThrow(() -> new IllegalStateException("El recibo no existe: " + incoming.getId()));
 
         if (receipt.getState() == ReceiptStatus.CANCELLED) {
             log.warn("Recibo {} ya estaba anulado, se ignora el mensaje", receipt.getId());
@@ -93,29 +93,29 @@ public class ReceiptService {
         log.info("Recibo {} anulado", receipt.getId());
     }
 
-    private PayMethodDomain resolvePayMethod(final ReceiptMessageDTO message) {
-        return payMethodRepository.findById(message.payMethodId())
+    private PayMethodDomain resolvePayMethod(final ReceiptDomain incoming) {
+        return payMethodRepository.findById(incoming.getPayMethod().getId())
                 .orElseThrow(() -> new IllegalStateException(
-                        "El método de pago no existe: " + message.payMethodId()));
+                        "El método de pago no existe: " + incoming.getPayMethod().getId()));
     }
 
-    private void validate(final ReceiptMessageDTO message) {
-        if (message == null || message.receiptId() == null) {
-            throw new IllegalArgumentException("El mensaje no trae receiptId");
+    private void validate(final ReceiptDomain incoming) {
+        if (incoming == null || incoming.getId() == null) {
+            throw new IllegalArgumentException("El mensaje no trae id");
         }
-        if (message.tutorId() == null) {
+        if (incoming.getTutorId() == null) {
             throw new IllegalArgumentException("El tutor es obligatorio");
         }
-        if (message.concept() == null || message.concept().isBlank()) {
+        if (incoming.getConcept() == null || incoming.getConcept().isBlank()) {
             throw new IllegalArgumentException("El concepto es obligatorio");
         }
-        if (message.amount() == null || message.amount().compareTo(BigDecimal.ZERO) <= 0) {
+        if (incoming.getAmount() == null || incoming.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("El valor debe ser mayor a cero");
         }
-        if (message.payMethodId() == null) {
+        if (incoming.getPayMethod() == null || incoming.getPayMethod().getId() == null) {
             throw new IllegalArgumentException("El método de pago es obligatorio");
         }
-        if (message.date() == null) {
+        if (incoming.getDate() == null) {
             throw new IllegalArgumentException("La fecha es obligatoria");
         }
     }
