@@ -7,14 +7,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
-/**
- * Vista parcial de la tabla de ordenes de venta, que pertenece al modulo de
- * Ventas de la API. El procesador de facturas solo necesita leer estos campos
- * y cambiar el estado a FACTURADA; las demas columnas no se mapean (JPA las
- * deja intactas al actualizar). No se crean ordenes de venta desde aqui.
- */
 @Entity
 @Table(name = "saleOrder")
 public class SaleOrderDomain {
@@ -36,7 +31,7 @@ public class SaleOrderDomain {
     private UUID petId;
 
     @Column(name = "total", nullable = false)
-    private Integer total;
+    private BigDecimal total;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "state", nullable = false, length = 20)
@@ -51,7 +46,7 @@ public class SaleOrderDomain {
     public String getOrderNumber() { return orderNumber; }
     public UUID getClientID() { return clientID; }
     public UUID getPetId() { return petId; }
-    public Integer getTotal() { return total; }
+    public BigDecimal getTotal() { return total; }
     public SaleOrderState getState() { return state; }
 
     public void setState(SaleOrderState state) { this.state = state; }

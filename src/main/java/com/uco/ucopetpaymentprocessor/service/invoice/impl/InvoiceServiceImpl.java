@@ -4,9 +4,9 @@ import com.uco.ucopetpaymentprocessor.domain.invoice.InvoiceDomain;
 import com.uco.ucopetpaymentprocessor.domain.invoice.InvoiceState;
 import com.uco.ucopetpaymentprocessor.domain.sale.SaleOrderDomain;
 import com.uco.ucopetpaymentprocessor.domain.sale.SaleOrderState;
-import com.uco.ucopetpaymentprocessor.dto.invoice.InvoiceCancelMessage;
-import com.uco.ucopetpaymentprocessor.dto.invoice.InvoiceCreateMessage;
-import com.uco.ucopetpaymentprocessor.dto.invoice.InvoicePaymentMessage;
+import com.uco.ucopetpaymentprocessor.dto.invoice.InvoiceCancelMessageDTO;
+import com.uco.ucopetpaymentprocessor.dto.invoice.InvoiceCreateMessageDTO;
+import com.uco.ucopetpaymentprocessor.dto.invoice.InvoicePaymentMessageDTO;
 import com.uco.ucopetpaymentprocessor.repository.invoice.InvoiceRepository;
 import com.uco.ucopetpaymentprocessor.repository.sale.SaleOrderRepository;
 import com.uco.ucopetpaymentprocessor.service.invoice.InvoiceService;
@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.UUID;
@@ -44,7 +45,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional
-    public void registerNewInvoice(InvoiceCreateMessage message) {
+    public void registerNewInvoice(InvoiceCreateMessageDTO message) {
         requireId(message.invoiceId());
 
         // Si el mismo mensaje llega dos veces, la segunda no hace nada.
@@ -80,7 +81,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setPetId(saleOrder.getPetId());
         invoice.setIssueDate(LocalDateTime.now(BOGOTA));
         invoice.setTotal(saleOrder.getTotal());
-        invoice.setPaidAmount(0);
+        invoice.setPaidAmount(BigDecimal.ZERO);
         invoice.setBalance(saleOrder.getTotal());
         invoice.setObservations(message.observations());
         invoice.setState(InvoiceState.PENDIENTE);
@@ -92,7 +93,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     @Transactional
-    public void registerPayment(InvoicePaymentMessage message) {
+    public void registerPayment(InvoicePaymentMessageDTO message) {
         InvoiceDomain existing = findExistingOrThrow(message.invoiceId());
 
         if (existing.getState() == InvoiceState.ANULADA) {
@@ -102,26 +103,28 @@ public class InvoiceServiceImpl implements InvoiceService {
             throw new InvoiceProcessingException("La factura " + existing.getInvoiceNumber()
                     + " ya se encuentra completamente pagada.");
         }
-        if (message.amount() == null || message.amount() <= 0) {
+        if (message.amount() == null || message.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvoiceProcessingException("amount debe ser mayor a cero.");
         }
 
-        int newPaidAmount = existing.getPaidAmount() + message.amount();
-        if (newPaidAmount > existing.getTotal()) {
+        BigDecimal newPaidAmount = existing.getPaidAmount().add(message.amount());
+        if (newPaidAmount.compareTo(existing.getTotal()) > 0) {
             throw new InvoiceProcessingException(
                     "El pago excede el saldo pendiente. Saldo actual: " + existing.getBalance());
         }
 
-        int newBalance = existing.getTotal() - newPaidAmount;
+        BigDecimal newBalance = existing.getTotal().subtract(newPaidAmount);
         existing.setPaidAmount(newPaidAmount);
         existing.setBalance(newBalance);
-        existing.setState(newBalance == 0 ? InvoiceState.PAGADA : InvoiceState.PARCIALMENTE_PAGADA);
+        // compareTo y no equals: con BigDecimal, 0 y 0.00 no son "iguales" para equals.
+        existing.setState(newBalance.compareTo(BigDecimal.ZERO) == 0
+                ? InvoiceState.PAGADA : InvoiceState.PARCIALMENTE_PAGADA);
         invoiceRepository.save(existing);
     }
 
     @Override
     @Transactional
-    public void cancelInvoice(InvoiceCancelMessage message) {
+    public void cancelInvoice(InvoiceCancelMessageDTO message) {
         InvoiceDomain existing = findExistingOrThrow(message.invoiceId());
 
         if (existing.getState() == InvoiceState.ANULADA) {

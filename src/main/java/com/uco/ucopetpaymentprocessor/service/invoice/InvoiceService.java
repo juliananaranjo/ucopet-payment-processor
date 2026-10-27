@@ -1,14 +1,14 @@
 package com.uco.ucopetpaymentprocessor.service.invoice;
 
-import com.uco.ucopetpaymentprocessor.dto.invoice.InvoiceCancelMessage;
-import com.uco.ucopetpaymentprocessor.dto.invoice.InvoiceCreateMessage;
-import com.uco.ucopetpaymentprocessor.dto.invoice.InvoicePaymentMessage;
+import com.uco.ucopetpaymentprocessor.dto.invoice.InvoiceCancelMessageDTO;
+import com.uco.ucopetpaymentprocessor.dto.invoice.InvoiceCreateMessageDTO;
+import com.uco.ucopetpaymentprocessor.dto.invoice.InvoicePaymentMessageDTO;
 
 public interface InvoiceService {
 
-    void registerNewInvoice(InvoiceCreateMessage message);
+    void registerNewInvoice(InvoiceCreateMessageDTO message);
 
-    void registerPayment(InvoicePaymentMessage message);
+    void registerPayment(InvoicePaymentMessageDTO message);
 
-    void cancelInvoice(InvoiceCancelMessage message);
+    void cancelInvoice(InvoiceCancelMessageDTO message);
 }

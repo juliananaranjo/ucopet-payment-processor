@@ -11,13 +11,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import org.springframework.data.domain.Persistable;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Misma tabla "invoice" que crea la API. Los nombres de tabla y columnas
- * deben coincidir con los de la API: el procesador usa ddl-auto=validate.
- */
 @Entity
 @Table(name = "invoice")
 public class InvoiceDomain implements Persistable<UUID> {
@@ -45,13 +42,13 @@ public class InvoiceDomain implements Persistable<UUID> {
     private LocalDateTime issueDate;
 
     @Column(name = "total", nullable = false)
-    private Integer total;
+    private BigDecimal total;
 
     @Column(name = "paid_amount", nullable = false)
-    private Integer paidAmount;
+    private BigDecimal paidAmount;
 
     @Column(name = "balance", nullable = false)
-    private Integer balance;
+    private BigDecimal balance;
 
     @Column(name = "observations", length = 255)
     private String observations;
@@ -67,7 +64,6 @@ public class InvoiceDomain implements Persistable<UUID> {
     private boolean isNew = true;
 
     public InvoiceDomain() {
-        // Constructor vacio requerido por JPA. Los valores se asignan con setters.
     }
 
     @Override
@@ -78,9 +74,9 @@ public class InvoiceDomain implements Persistable<UUID> {
     public UUID getClientID() { return clientID; }
     public UUID getPetId() { return petId; }
     public LocalDateTime getIssueDate() { return issueDate; }
-    public Integer getTotal() { return total; }
-    public Integer getPaidAmount() { return paidAmount; }
-    public Integer getBalance() { return balance; }
+    public BigDecimal getTotal() { return total; }
+    public BigDecimal getPaidAmount() { return paidAmount; }
+    public BigDecimal getBalance() { return balance; }
     public String getObservations() { return observations; }
     public InvoiceState getState() { return state; }
 
@@ -91,9 +87,9 @@ public class InvoiceDomain implements Persistable<UUID> {
     public void setClientID(UUID clientID) { this.clientID = clientID; }
     public void setPetId(UUID petId) { this.petId = petId; }
     public void setIssueDate(LocalDateTime issueDate) { this.issueDate = issueDate; }
-    public void setTotal(Integer total) { this.total = total; }
-    public void setPaidAmount(Integer paidAmount) { this.paidAmount = paidAmount; }
-    public void setBalance(Integer balance) { this.balance = balance; }
+    public void setTotal(BigDecimal total) { this.total = total; }
+    public void setPaidAmount(BigDecimal paidAmount) { this.paidAmount = paidAmount; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
     public void setObservations(String observations) { this.observations = observations; }
     public void setState(InvoiceState state) { this.state = state; }
 
