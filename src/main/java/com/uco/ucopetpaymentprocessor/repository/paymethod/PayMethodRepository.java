@@ -1,4 +1,4 @@
-package com.uco.ucopetpaymentprocessor.repository.payMethods;
+package com.uco.ucopetpaymentprocessor.repository.paymethod;
 
 import com.uco.ucopetpaymentprocessor.domain.payMethods.PayMethodDomain;
 import org.springframework.data.jpa.repository.JpaRepository;
